@@ -3,6 +3,9 @@ export type UserRole = 'admin' | 'verifikator' | 'operator';
 export interface UserProfile {
   uid: string;
   email: string;
+  username?: string;
+  password?: string;
+  authType?: 'google' | 'manual';
   displayName: string;
   photoURL: string;
   role: UserRole;

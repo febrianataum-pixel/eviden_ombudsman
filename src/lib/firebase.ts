@@ -3,12 +3,15 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut, 
   onAuthStateChanged,
   User 
 } from 'firebase/auth';
 import { 
   getFirestore, 
+  initializeFirestore,
   doc, 
   getDoc, 
   setDoc, 
@@ -40,10 +43,21 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 // Initialize Auth
 export const auth = getAuth(app);
 
-// Initialize Firestore with custom database ID
-export const db = firebaseConfigJson.firestoreDatabaseId && firebaseConfigJson.firestoreDatabaseId !== '(default)'
-  ? getFirestore(app, firebaseConfigJson.firestoreDatabaseId)
-  : getFirestore(app);
+// Initialize Firestore with custom database ID and long polling for iframe sandbox compatibility
+const databaseId = (firebaseConfigJson.firestoreDatabaseId && firebaseConfigJson.firestoreDatabaseId !== '(default)')
+  ? firebaseConfigJson.firestoreDatabaseId
+  : '(default)';
+
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+  }, databaseId);
+} catch (e) {
+  firestoreDb = databaseId !== '(default)' ? getFirestore(app, databaseId) : getFirestore(app);
+}
+
+export const db = firestoreDb;
 
 // Google Auth Provider with Google Drive Scopes
 export const googleProvider = new GoogleAuthProvider();
@@ -55,6 +69,8 @@ googleProvider.setCustomParameters({
 
 export { 
   signInWithPopup, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut, 
   onAuthStateChanged, 
   doc, 
