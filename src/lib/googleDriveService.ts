@@ -334,6 +334,65 @@ export function extractDriveFileId(url: string): string | null {
 }
 
 /**
+ * Extracts Drive Folder ID from standard Google Drive Folder URL
+ */
+export function extractDriveFolderId(url: string): string | null {
+  if (!url) return null;
+  const match = url.match(/\/folders\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+export interface DriveFileInfo {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  webViewLink: string;
+  createdTime?: string;
+}
+
+/**
+ * Fetches list of files inside a Google Drive folder.
+ */
+export async function fetchFilesInDriveFolder(
+  folderId: string,
+  customToken?: string
+): Promise<DriveFileInfo[]> {
+  const token = customToken || getDriveAccessToken();
+  if (!token) {
+    throw new Error('Token Google Drive tidak ditemukan. Silakan login dengan akun Google terlebih dahulu.');
+  }
+
+  const query = `'${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`;
+  const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
+    query
+  )}&fields=files(id,name,mimeType,size,webViewLink,createdTime)&pageSize=100`;
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gagal membaca isi folder Google Drive (${res.status}). Silakan periksa link folder atau hak akses Google Drive Anda.`);
+  }
+
+  const data = await res.json();
+  const files: DriveFileInfo[] = (data.files || []).map((f: any) => ({
+    id: f.id,
+    name: f.name,
+    mimeType: f.mimeType || getFallbackMimeType(f.name),
+    size: parseInt(f.size || '0', 10),
+    webViewLink: f.webViewLink || `https://drive.google.com/file/d/${f.id}/view?usp=sharing`,
+    createdTime: f.createdTime,
+  }));
+
+  return files;
+}
+
+/**
  * Deletes a file from Google Drive using Google Drive API v3.
  */
 export async function deleteFileFromDrive(driveFileId: string): Promise<boolean> {

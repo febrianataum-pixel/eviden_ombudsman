@@ -320,7 +320,7 @@ export const DimensionView: React.FC<DimensionViewProps> = ({ dimensionId }) => 
                                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1.5 shadow-xs"
                               >
                                 <Upload size={14} />
-                                <span>{hasEvidence ? 'Tambah File Tambahan' : 'Upload Bukti'}</span>
+                                <span>{hasEvidence ? 'Tambah File' : 'Upload Bukti'}</span>
                               </button>
 
                               <button
@@ -335,6 +335,21 @@ export const DimensionView: React.FC<DimensionViewProps> = ({ dimensionId }) => 
                               >
                                 <Link2 size={14} />
                                 <span>Tambah Link</span>
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  setUploadModalState({
+                                    isOpen: true,
+                                    requirementId: req.id,
+                                    requirementTitle: req.title,
+                                  })
+                                }
+                                title="Deteksi otomatis file yang diupload langsung di Google Drive"
+                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1.5"
+                              >
+                                <Sparkles size={14} className="text-amber-500" />
+                                <span>Auto-Detect Google Drive</span>
                               </button>
                             </div>
                           )}

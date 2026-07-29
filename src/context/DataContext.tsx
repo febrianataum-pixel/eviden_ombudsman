@@ -32,6 +32,10 @@ import {
   uploadFileToDrive, 
   deleteFileFromDrive, 
   extractDriveFileId, 
+  extractDriveFolderId,
+  fetchFilesInDriveFolder,
+  getOrCreateTargetFolder,
+  getDriveAccessToken,
   syncAllDriveFolderStructure, 
   DriveUploadResult 
 } from '../lib/googleDriveService';
@@ -53,6 +57,13 @@ interface DataContextType {
   syncDriveFolders: (
     onProgress?: (status: string) => void
   ) => Promise<{ success: boolean; createdFolders: number; message: string }>;
+
+  syncDriveFolderForRequirement: (
+    requirementId: string,
+    folderUrlOrId?: string,
+    uploaderUid?: string,
+    uploaderName?: string
+  ) => Promise<{ count: number; importedFiles: string[] }>;
 
   uploadEvidenceFile: (
     requirementId: string,
@@ -336,6 +347,111 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     onProgress?: (status: string) => void
   ) => {
     return await syncAllDriveFolderStructure(dimensions, indicators, onProgress);
+  };
+
+  // Auto-Detect & Sync Google Drive folder for requirement
+  const syncDriveFolderForRequirement = async (
+    requirementId: string,
+    folderUrlOrId?: string,
+    uploaderUid: string = 'system',
+    uploaderName: string = 'Operator'
+  ): Promise<{ count: number; importedFiles: string[] }> => {
+    const req = requirements.find((r) => r.id === requirementId);
+    if (!req) throw new Error('Dokumen kebutuhan tidak ditemukan.');
+
+    const indicator = indicators.find((i) => i.id === req.indicatorId);
+    const dimension = dimensions.find((d) => d.id === req.dimensionId);
+
+    let folderId = folderUrlOrId ? (extractDriveFolderId(folderUrlOrId) || folderUrlOrId.trim()) : '';
+
+    if (!folderId) {
+      const token = getDriveAccessToken();
+      if (token) {
+        folderId = await getOrCreateTargetFolder(
+          token,
+          dimension?.code || '01',
+          indicator?.code || 'IN-01',
+          dimension?.title,
+          indicator?.title
+        );
+      }
+    }
+
+    if (!folderId) {
+      throw new Error('Masukkan Link Folder Google Drive atau login dengan akun Google.');
+    }
+
+    const driveFiles = await fetchFilesInDriveFolder(folderId);
+
+    if (!driveFiles || driveFiles.length === 0) {
+      return { count: 0, importedFiles: [] };
+    }
+
+    const existingEvidences = evidences.filter((e) => e.requirementId === requirementId);
+    const existingFileIds = new Set(existingEvidences.map((e) => e.driveFileId).filter(Boolean));
+    const existingUrls = new Set(existingEvidences.map((e) => e.driveUrl).filter(Boolean));
+
+    const importedFiles: string[] = [];
+    let count = 0;
+
+    for (const file of driveFiles) {
+      if (existingFileIds.has(file.id) || existingUrls.has(file.webViewLink)) {
+        continue;
+      }
+
+      const evidenceDocData = {
+        requirementId,
+        indicatorId: req.indicatorId,
+        dimensionId: req.dimensionId,
+        type: 'upload' as EvidenceType,
+        fileName: file.name,
+        driveFileId: file.id,
+        driveUrl: file.webViewLink,
+        mimeType: file.mimeType,
+        fileSize: file.size,
+        uploadedBy: uploaderUid,
+        uploadedByName: uploaderName,
+        uploadedAt: serverTimestamp(),
+        verificationStatus: 'pending' as VerificationStatus,
+        verificationNote: 'Auto-detected dari Google Drive',
+        verifiedBy: null,
+        verifiedByName: null,
+        verifiedAt: null,
+        version: 1,
+      };
+
+      const docRef = await addDoc(collection(db, 'evidences'), evidenceDocData);
+
+      await addDoc(collection(db, 'evidenceHistory'), {
+        evidenceId: docRef.id,
+        requirementId,
+        type: 'upload',
+        fileName: file.name,
+        driveFileId: file.id,
+        driveUrl: file.webViewLink,
+        mimeType: file.mimeType,
+        fileSize: file.size,
+        uploadedBy: uploaderUid,
+        uploadedByName: uploaderName,
+        uploadedAt: serverTimestamp(),
+        action: 'uploaded',
+        note: 'Terdeteksi otomatis dari folder Google Drive',
+      });
+
+      importedFiles.push(file.name);
+      count++;
+    }
+
+    if (count > 0) {
+      await logActivity(
+        uploaderUid,
+        uploaderName,
+        'Auto Detect Google Drive',
+        `Mendeteksi ${count} file baru dari Google Drive untuk: ${req.title}`
+      );
+    }
+
+    return { count, importedFiles };
   };
 
   // Upload Evidence File
@@ -788,6 +904,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         uploading,
         uploadProgress,
         syncDriveFolders,
+        syncDriveFolderForRequirement,
         uploadEvidenceFile,
         addEvidenceLink,
         replaceEvidenceFile,
