@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, HardDrive, ShieldCheck, Key, Database, Sparkles, FolderPlus, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Settings, HardDrive, ShieldCheck, Key, Database, Sparkles, FolderPlus, CheckCircle2, AlertCircle, Loader2, Globe, ExternalLink, Copy, Check } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 
 export const SettingsView: React.FC = () => {
@@ -7,6 +7,15 @@ export const SettingsView: React.FC = () => {
   const [syncing, setSyncing] = useState<boolean>(false);
   const [syncStatus, setSyncStatus] = useState<string>('');
   const [resultMessage, setResultMessage] = useState<{ success: boolean; text: string } | null>(null);
+  const [copiedDomain, setCopiedDomain] = useState<boolean>(false);
+
+  const vercelDomain = 'evidendinsospppa.vercel.app';
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(vercelDomain);
+    setCopiedDomain(true);
+    setTimeout(() => setCopiedDomain(false), 2000);
+  };
 
   const handleSyncFolders = async () => {
     setSyncing(true);
@@ -37,7 +46,7 @@ export const SettingsView: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-slate-900">Pengaturan Sistem E-VIDEN</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Konfigurasi aplikasi, integrasi Google Drive API, dan database Cloud Firestore.
+            Konfigurasi aplikasi, integrasi Google Drive API, Authorized Domains Vercel, dan database Cloud Firestore.
           </p>
         </div>
       </div>
@@ -61,6 +70,46 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Authorized Domain Guide for Vercel */}
+      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white border border-blue-800 rounded-2xl p-6 shadow-md space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-blue-800/80 rounded-xl">
+              <Globe size={20} className="text-blue-300" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-white">Authorized Domain Google Login (Vercel)</h3>
+              <p className="text-xs text-blue-200">Domain Vercel Anda yang diizinkan untuk Google Sign-In</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 bg-slate-900/60 border border-blue-400/30 px-3 py-1.5 rounded-xl text-xs font-mono">
+            <span className="text-emerald-300 font-semibold">{vercelDomain}</span>
+            <button
+              onClick={copyToClipboard}
+              className="text-blue-200 hover:text-white transition p-1 rounded cursor-pointer"
+              title="Salin Domain"
+            >
+              {copiedDomain ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 bg-blue-950/50 border border-blue-800/60 rounded-xl text-xs space-y-2 text-blue-100">
+          <p className="font-semibold text-white">Langkah Aktivasi di Firebase & Google Cloud Console:</p>
+          <ol className="list-decimal list-inside space-y-1 text-blue-200 leading-relaxed">
+            <li>
+              Buka <a href="https://console.firebase.google.com/u/0/project/leafy-builder-371nt/authentication/settings" target="_blank" rel="noreferrer" className="underline text-amber-300 font-semibold hover:text-amber-200 inline-flex items-center gap-1">Firebase Auth Settings <ExternalLink size={10} /></a> &rarr; tab <strong>Authorized Domains</strong> &rarr; Klik <strong>Add Domain</strong> &rarr; masukkan <code className="bg-blue-900/80 px-1.5 py-0.5 rounded text-amber-300">{vercelDomain}</code>.
+            </li>
+            <li>
+              Buka <a href="https://console.cloud.google.com/apis/credentials?project=leafy-builder-371nt" target="_blank" rel="noreferrer" className="underline text-amber-300 font-semibold hover:text-amber-200 inline-flex items-center gap-1">Google Cloud Credentials <ExternalLink size={10} /></a> &rarr; edit <strong>OAuth 2.0 Client ID</strong> &rarr; tambahkan URL berikut pada <strong>Authorized JavaScript origins</strong>:
+              <br />
+              <code className="bg-blue-900/80 px-1.5 py-0.5 rounded text-emerald-300 font-mono mt-1 inline-block">https://evidendinsospppa.vercel.app</code>
+            </li>
+          </ol>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
@@ -135,8 +184,8 @@ export const SettingsView: React.FC = () => {
               <span className="font-semibold text-emerald-700">Google Auth Provider (Active)</span>
             </div>
             <div className="flex justify-between py-1.5 border-b border-slate-200">
-              <span className="text-slate-500">Aturan Keamanan Rules:</span>
-              <span className="font-semibold text-emerald-700">Role-Based Access Control</span>
+              <span className="text-slate-500">Authorized Domain:</span>
+              <span className="font-mono text-xs text-indigo-700 font-bold">{vercelDomain}</span>
             </div>
             <div className="flex justify-between py-1.5">
               <span className="text-slate-500">Versi Aplikasi:</span>
@@ -150,3 +199,4 @@ export const SettingsView: React.FC = () => {
     </div>
   );
 };
+
