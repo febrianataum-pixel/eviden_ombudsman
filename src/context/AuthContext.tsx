@@ -56,25 +56,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userSnap = await getDoc(userRef);
 
       const nowStr = new Date().toISOString();
+      const userEmail = (fbUser.email || '').toLowerCase();
+      const isTargetAdmin = 
+        userEmail === 'febrianataum@gmail.com' || 
+        userEmail.includes('febrian') || 
+        userEmail.includes('admin');
 
       if (userSnap.exists()) {
         const data = userSnap.data() as UserProfile;
+        const roleToSet: UserRole = isTargetAdmin ? 'admin' : (data.role || 'operator');
+
         const updatedProfile: UserProfile = {
           ...data,
           displayName: fbUser.displayName || data.displayName || 'Pengguna',
           photoURL: fbUser.photoURL || data.photoURL || '',
+          role: roleToSet,
           lastLogin: nowStr,
         };
         await updateDoc(userRef, {
           displayName: updatedProfile.displayName,
           photoURL: updatedProfile.photoURL,
+          role: roleToSet,
           lastLogin: serverTimestamp(),
         });
         setUser(updatedProfile);
       } else {
-        // Determine initial role: febrianataum@gmail.com or first user gets Admin
-        const isDefaultAdmin = fbUser.email?.toLowerCase().includes('febrian') || fbUser.email?.toLowerCase().includes('admin');
-        const role: UserRole = isDefaultAdmin ? 'admin' : 'operator';
+        const role: UserRole = isTargetAdmin ? 'admin' : 'operator';
 
         const newProfile: UserProfile = {
           uid: fbUser.uid,
@@ -96,13 +103,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('Error syncing user profile:', err);
-      // Fallback local profile if Firestore write fails temporarily
+      const userEmail = (fbUser.email || '').toLowerCase();
+      const isTargetAdmin = 
+        userEmail === 'febrianataum@gmail.com' || 
+        userEmail.includes('febrian') || 
+        userEmail.includes('admin');
+
       setUser({
         uid: fbUser.uid,
         email: fbUser.email || '',
         displayName: fbUser.displayName || 'Pengguna Ombudsman',
         photoURL: fbUser.photoURL || '',
-        role: fbUser.email?.toLowerCase().includes('febrian') ? 'admin' : 'operator',
+        role: isTargetAdmin ? 'admin' : 'operator',
         lastLogin: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       });
