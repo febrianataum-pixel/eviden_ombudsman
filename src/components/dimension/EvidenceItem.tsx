@@ -149,7 +149,13 @@ export const EvidenceItem: React.FC<EvidenceItemProps> = ({
             className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-semibold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1.5 text-[11px]"
           >
             <Eye size={13} />
-            <span>Lihat File Google Drive</span>
+            <span>
+              {evidence.type === 'link' 
+                ? 'Buka Link External' 
+                : evidence.driveUrl?.startsWith('data:') 
+                ? 'Buka Dokumen' 
+                : 'Lihat File Google Drive'}
+            </span>
             <ExternalLink size={11} />
           </a>
 

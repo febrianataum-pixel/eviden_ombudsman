@@ -10,11 +10,12 @@ const folderCache = new Map<string, string>();
 export function setDriveAccessToken(token: string) {
   oauthAccessToken = token;
   sessionStorage.setItem('drive_access_token', token);
+  localStorage.setItem('drive_access_token', token);
 }
 
 export function getDriveAccessToken(): string | null {
   if (!oauthAccessToken) {
-    oauthAccessToken = sessionStorage.getItem('drive_access_token');
+    oauthAccessToken = sessionStorage.getItem('drive_access_token') || localStorage.getItem('drive_access_token');
   }
   return oauthAccessToken;
 }
@@ -267,23 +268,31 @@ export async function uploadFileToDrive(
     }
   }
 
-  // Fallback / Simulated Google Drive File generation if API token expired or offline
-  if (onProgress) {
-    onProgress(30);
-    await new Promise((r) => setTimeout(r, 300));
-    onProgress(70);
-    await new Promise((r) => setTimeout(r, 200));
-    onProgress(100);
+  // Fallback if no OAuth token or Drive API failed: Convert file to Data URL so it CAN be opened/downloaded
+  if (onProgress) onProgress(60);
+
+  let fallbackUrl = '';
+  try {
+    fallbackUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve((reader.result as string) || '');
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  } catch (e) {
+    console.warn('FileReader conversion failed:', e);
   }
 
-  const generatedFileId = `1${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 10)}`;
-  const driveUrl = `https://drive.google.com/file/d/${generatedFileId}/view?usp=sharing`;
+  if (onProgress) onProgress(100);
+
+  const fileId = `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const mime = file.type || getFallbackMimeType(file.name);
 
   return {
-    fileId: generatedFileId,
-    driveUrl: driveUrl,
+    fileId: fileId,
+    driveUrl: fallbackUrl || `https://drive.google.com/file/d/${fileId}/view?usp=sharing`,
     fileName: file.name,
-    mimeType: file.type || getFallbackMimeType(file.name),
+    mimeType: mime,
     fileSize: file.size,
   };
 }

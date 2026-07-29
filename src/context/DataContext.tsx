@@ -150,7 +150,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
 
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, user } = useAuth();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -158,7 +158,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize master data in state and setup Firestore real-time listeners
   useEffect(() => {
-    if (!firebaseUser) {
+    if (!firebaseUser && !user) {
       setLoading(false);
       return;
     }
@@ -306,7 +306,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (unsubTrust) unsubTrust();
       if (unsubLogs) unsubLogs();
     };
-  }, [firebaseUser]);
+  }, [firebaseUser, user]);
 
   const formatTimestamp = (ts: any): string => {
     if (!ts) return new Date().toISOString();
