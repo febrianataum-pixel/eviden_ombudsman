@@ -1,0 +1,118 @@
+{
+  "collections": [
+    {
+      "name": "users",
+      "description": "User profiles with role assignment and Google Auth metadata",
+      "fields": [
+        { "name": "uid", "type": "string", "description": "Firebase Auth UID" },
+        { "name": "email", "type": "string", "description": "User email address" },
+        { "name": "displayName", "type": "string", "description": "Full name" },
+        { "name": "photoURL", "type": "string", "description": "Google profile photo URL" },
+        { "name": "role", "type": "string", "description": "User role: admin, verifikator, or operator" },
+        { "name": "lastLogin", "type": "timestamp", "description": "Last sign-in timestamp" },
+        { "name": "createdAt", "type": "timestamp", "description": "Account creation timestamp" }
+      ]
+    },
+    {
+      "name": "dimensions",
+      "description": "Assessment Dimensions (Input, Proses, Output, Pengaduan)",
+      "fields": [
+        { "name": "code", "type": "string", "description": "Dimension code e.g. 01" },
+        { "name": "title", "type": "string", "description": "Dimension title" },
+        { "name": "description", "type": "string", "description": "Dimension overview" },
+        { "name": "order", "type": "number", "description": "Display order" },
+        { "name": "isSecondaryData", "type": "boolean", "description": "True if output dimension uses secondary data" }
+      ]
+    },
+    {
+      "name": "indicators",
+      "description": "Assessment Indicators per Dimension",
+      "fields": [
+        { "name": "dimensionId", "type": "string", "description": "Parent dimension ID" },
+        { "name": "number", "type": "number", "description": "Indicator sequence number" },
+        { "name": "code", "type": "string", "description": "Indicator code e.g. PR-01" },
+        { "name": "title", "type": "string", "description": "Indicator title" },
+        { "name": "description", "type": "string", "description": "Description" },
+        { "name": "specialNote", "type": "string", "description": "Special instructions e.g. 15 phone contacts" },
+        { "name": "isSecondaryData", "type": "boolean", "description": "True if secondary data" }
+      ]
+    },
+    {
+      "name": "requirements",
+      "description": "Document requirements / checklist items for indicators",
+      "fields": [
+        { "name": "dimensionId", "type": "string", "description": "Parent dimension ID" },
+        { "name": "indicatorId", "type": "string", "description": "Parent indicator ID" },
+        { "name": "number", "type": "number", "description": "Requirement sequence number" },
+        { "name": "title", "type": "string", "description": "Requirement title" },
+        { "name": "description", "type": "string", "description": "Requirement explanation" },
+        { "name": "required", "type": "boolean", "description": "Is mandatory requirement" }
+      ]
+    },
+    {
+      "name": "evidences",
+      "description": "Evidence records uploaded or linked for document requirements",
+      "fields": [
+        { "name": "requirementId", "type": "string", "description": "Target requirement ID" },
+        { "name": "indicatorId", "type": "string", "description": "Parent indicator ID" },
+        { "name": "dimensionId", "type": "string", "description": "Parent dimension ID" },
+        { "name": "type", "type": "string", "description": "upload or link" },
+        { "name": "fileName", "type": "string", "description": "File name or link title" },
+        { "name": "driveFileId", "type": "string", "description": "Google Drive File ID" },
+        { "name": "driveUrl", "type": "string", "description": "Google Drive web view link" },
+        { "name": "externalUrl", "type": "string", "description": "External URL if link type" },
+        { "name": "mimeType", "type": "string", "description": "File MIME type" },
+        { "name": "fileSize", "type": "number", "description": "File size in bytes" },
+        { "name": "uploadedBy", "type": "string", "description": "Uploader UID" },
+        { "name": "uploadedByName", "type": "string", "description": "Uploader display name" },
+        { "name": "uploadedAt", "type": "timestamp", "description": "Upload timestamp" },
+        { "name": "verificationStatus", "type": "string", "description": "pending, verified, or needs_revision" },
+        { "name": "verificationNote", "type": "string", "description": "Verifikator notes or revision details" },
+        { "name": "verifiedBy", "type": "string", "description": "Verifikator UID" },
+        { "name": "verifiedByName", "type": "string", "description": "Verifikator name" },
+        { "name": "verifiedAt", "type": "timestamp", "description": "Verification timestamp" },
+        { "name": "version", "type": "number", "description": "Document version number" }
+      ]
+    },
+    {
+      "name": "evidenceHistory",
+      "description": "Historical audit log of evidence upload replacements and updates",
+      "fields": [
+        { "name": "evidenceId", "type": "string", "description": "Target evidence ID" },
+        { "name": "requirementId", "type": "string", "description": "Target requirement ID" },
+        { "name": "type", "type": "string", "description": "upload or link" },
+        { "name": "fileName", "type": "string", "description": "File name" },
+        { "name": "driveFileId", "type": "string", "description": "Drive file ID" },
+        { "name": "driveUrl", "type": "string", "description": "Drive URL" },
+        { "name": "externalUrl", "type": "string", "description": "External URL" },
+        { "name": "uploadedBy", "type": "string", "description": "User UID" },
+        { "name": "uploadedByName", "type": "string", "description": "User name" },
+        { "name": "uploadedAt", "type": "timestamp", "description": "History entry timestamp" },
+        { "name": "action", "type": "string", "description": "uploaded, updated, replaced, or revised" }
+      ]
+    },
+    {
+      "name": "communityTrust",
+      "description": "Kepercayaan Masyarakat / Survey tracking for service units (min 30 respondents)",
+      "fields": [
+        { "name": "unitName", "type": "string", "description": "Name of public service unit" },
+        { "name": "targetRespondents", "type": "number", "description": "Target respondent count e.g. 30" },
+        { "name": "currentRespondents", "type": "number", "description": "Current survey responses count" },
+        { "name": "questionnaireUrl", "type": "string", "description": "Survey form link" },
+        { "name": "updatedAt", "type": "timestamp", "description": "Last updated date" }
+      ]
+    },
+    {
+      "name": "activityLogs",
+      "description": "System activity audit trail",
+      "fields": [
+        { "name": "userId", "type": "string", "description": "User UID" },
+        { "name": "userName", "type": "string", "description": "User display name" },
+        { "name": "userRole", "type": "string", "description": "User role" },
+        { "name": "action", "type": "string", "description": "Short action description" },
+        { "name": "details", "type": "string", "description": "Action details" },
+        { "name": "timestamp", "type": "timestamp", "description": "Log timestamp" }
+      ]
+    }
+  ]
+}

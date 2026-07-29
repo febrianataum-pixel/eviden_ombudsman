@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Evidences
+    match /evidences/{evidenceId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Evidence History
+    match /evidenceHistory/{historyId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Community Trust
+    match /communityTrust/{unitId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Activity Logs
+    match /activityLogs/{logId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Default fallback rule
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}
