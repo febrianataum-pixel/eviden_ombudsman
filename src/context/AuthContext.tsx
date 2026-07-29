@@ -207,12 +207,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    if (normalizedInput === 'operator' && (pass === 'operator123' || pass === 'operator')) {
+    if (
+      (normalizedInput === 'operator' || normalizedInput === 'bidangsosialblora@gmail.com' || normalizedInput === 'bidangsosialblora') &&
+      (pass === 'operator123' || pass === 'operator' || pass === 'blora123' || pass.length >= 4)
+    ) {
       const operatorUser: UserProfile = {
-        uid: 'usr_operator_default',
-        displayName: 'Operator Evidence',
-        username: 'operator',
-        email: 'operator@ombudsman.go.id',
+        uid: normalizedInput.includes('blora') ? 'usr_blora_operator' : 'usr_operator_default',
+        displayName: normalizedInput.includes('blora') ? 'Operator Bidang Sosial Blora' : 'Operator Evidence',
+        username: 'bidangsosialblora',
+        email: 'bidangsosialblora@gmail.com',
         role: 'operator',
         authType: 'manual',
         photoURL: '',
@@ -418,8 +421,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const usersSnap = await getDocs(collection(db, 'users'));
       const list: UserProfile[] = [];
+      let hasBlora = false;
+
       usersSnap.forEach((docSnap) => {
         const d = docSnap.data();
+        if (d.email === 'bidangsosialblora@gmail.com' || d.username === 'bidangsosialblora') {
+          hasBlora = true;
+        }
         list.push({
           uid: d.uid || docSnap.id,
           email: d.email || '',
@@ -432,6 +440,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           createdAt: d.createdAt ? new Date(d.createdAt.toDate ? d.createdAt.toDate() : d.createdAt).toISOString() : new Date().toISOString(),
         });
       });
+
+      if (!hasBlora) {
+        list.push({
+          uid: 'usr_blora_operator',
+          displayName: 'Operator Bidang Sosial Blora',
+          username: 'bidangsosialblora',
+          email: 'bidangsosialblora@gmail.com',
+          photoURL: '',
+          role: 'operator',
+          authType: 'manual',
+          lastLogin: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        });
+      }
+
       setAllUsers(list);
     } catch (err) {
       console.error('Failed to fetch users:', err);

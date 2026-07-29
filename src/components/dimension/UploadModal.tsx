@@ -96,7 +96,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error('Upload failed:', err);
-      setError('Gagal mengunggah file. Pastikan koneksi stabil.');
+      setError(err?.message || 'Gagal mengunggah file. Pastikan koneksi stabil.');
     }
   };
 
