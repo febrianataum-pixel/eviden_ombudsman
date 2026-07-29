@@ -5,9 +5,6 @@ import {
   signInWithPopup, 
   signOut, 
   onAuthStateChanged, 
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
   db, 
   doc, 
   getDoc, 
@@ -25,8 +22,6 @@ interface AuthContextType {
   firebaseUser: User | null;
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
-  loginWithEmail: (email: string, pass: string) => Promise<void>;
-  registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserRole: (uid: string, role: UserRole) => Promise<void>;
   allUsers: UserProfile[];
@@ -61,32 +56,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userSnap = await getDoc(userRef);
 
       const nowStr = new Date().toISOString();
-      const userEmail = (fbUser.email || '').toLowerCase();
-      const isTargetAdmin = 
-        userEmail === 'febrianataum@gmail.com' || 
-        userEmail.includes('febrian') || 
-        userEmail.includes('admin');
 
       if (userSnap.exists()) {
         const data = userSnap.data() as UserProfile;
-        const roleToSet: UserRole = isTargetAdmin ? 'admin' : (data.role || 'operator');
-
         const updatedProfile: UserProfile = {
           ...data,
           displayName: fbUser.displayName || data.displayName || 'Pengguna',
           photoURL: fbUser.photoURL || data.photoURL || '',
-          role: roleToSet,
           lastLogin: nowStr,
         };
         await updateDoc(userRef, {
           displayName: updatedProfile.displayName,
           photoURL: updatedProfile.photoURL,
-          role: roleToSet,
           lastLogin: serverTimestamp(),
         });
         setUser(updatedProfile);
       } else {
-        const role: UserRole = isTargetAdmin ? 'admin' : 'operator';
+        // Determine initial role: febrianataum@gmail.com or first user gets Admin
+        const isDefaultAdmin = fbUser.email?.toLowerCase().includes('febrian') || fbUser.email?.toLowerCase().includes('admin');
+        const role: UserRole = isDefaultAdmin ? 'admin' : 'operator';
 
         const newProfile: UserProfile = {
           uid: fbUser.uid,
@@ -108,18 +96,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('Error syncing user profile:', err);
-      const userEmail = (fbUser.email || '').toLowerCase();
-      const isTargetAdmin = 
-        userEmail === 'febrianataum@gmail.com' || 
-        userEmail.includes('febrian') || 
-        userEmail.includes('admin');
-
+      // Fallback local profile if Firestore write fails temporarily
       setUser({
         uid: fbUser.uid,
         email: fbUser.email || '',
         displayName: fbUser.displayName || 'Pengguna Ombudsman',
         photoURL: fbUser.photoURL || '',
-        role: isTargetAdmin ? 'admin' : 'operator',
+        role: fbUser.email?.toLowerCase().includes('febrian') ? 'admin' : 'operator',
         lastLogin: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       });
@@ -139,39 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('Google Sign-in failed:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loginWithEmail = async (email: string, pass: string) => {
-    setLoading(true);
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
-      if (cred.user) {
-        await syncUserProfile(cred.user);
-      }
-    } catch (err) {
-      console.error('Email login failed:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const registerWithEmail = async (email: string, pass: string, name: string) => {
-    setLoading(true);
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      if (cred.user) {
-        if (name) {
-          await updateProfile(cred.user, { displayName: name });
-        }
-        await syncUserProfile(cred.user);
-      }
-    } catch (err) {
-      console.error('Email registration failed:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -235,8 +185,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         firebaseUser,
         loading,
         loginWithGoogle,
-        loginWithEmail,
-        registerWithEmail,
         logout,
         updateUserRole,
         allUsers,

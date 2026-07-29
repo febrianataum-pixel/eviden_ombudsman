@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
 import { Navbar } from './components/layout/Navbar';
@@ -21,16 +21,12 @@ const MainAppContent: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  useEffect(() => {
-    document.title = 'E-VIDEN DINSOS PPPA';
-  }, []);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center font-sans">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-semibold">Memuat E-VIDEN DINSOS PPPA...</p>
+          <p className="text-xs text-slate-500 font-semibold">Memuat E-VIDEN OMBUDSMAN 2026...</p>
         </div>
       </div>
     );
