@@ -5,6 +5,9 @@ import {
   signInWithPopup, 
   signOut, 
   onAuthStateChanged, 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
   db, 
   doc, 
   getDoc, 
@@ -22,6 +25,8 @@ interface AuthContextType {
   firebaseUser: User | null;
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, pass: string) => Promise<void>;
+  registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserRole: (uid: string, role: UserRole) => Promise<void>;
   allUsers: UserProfile[];
@@ -140,6 +145,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithEmail = async (email: string, pass: string) => {
+    setLoading(true);
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      if (cred.user) {
+        await syncUserProfile(cred.user);
+      }
+    } catch (err) {
+      console.error('Email login failed:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const registerWithEmail = async (email: string, pass: string, name: string) => {
+    setLoading(true);
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      if (cred.user) {
+        if (name) {
+          await updateProfile(cred.user, { displayName: name });
+        }
+        await syncUserProfile(cred.user);
+      }
+    } catch (err) {
+      console.error('Email registration failed:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -197,6 +235,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         firebaseUser,
         loading,
         loginWithGoogle,
+        loginWithEmail,
+        registerWithEmail,
         logout,
         updateUserRole,
         allUsers,

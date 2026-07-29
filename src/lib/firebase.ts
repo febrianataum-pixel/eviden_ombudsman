@@ -5,6 +5,9 @@ import {
   signInWithPopup, 
   signOut, 
   onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
   User 
 } from 'firebase/auth';
 import { 
@@ -45,10 +48,8 @@ export const db = firebaseConfigJson.firestoreDatabaseId && firebaseConfigJson.f
   ? getFirestore(app, firebaseConfigJson.firestoreDatabaseId)
   : getFirestore(app);
 
-// Google Auth Provider with Google Drive Scopes
+// Google Auth Provider (Standard Sign-In without sensitive restricted scopes)
 export const googleProvider = new GoogleAuthProvider();
-// Request Drive scopes for Google Drive API file operations
-googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
@@ -57,6 +58,9 @@ export {
   signInWithPopup, 
   signOut, 
   onAuthStateChanged, 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
   doc, 
   getDoc, 
   setDoc, 
